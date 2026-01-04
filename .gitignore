@@ -1,0 +1,19 @@
+# --- Foldere de compilare (GUNOI) ---
+bin/
+obj/
+
+# --- Setări Editor (PERSONAL) ---
+.idea/
+.vs/
+*.user
+*.suo
+*.userprefs
+
+# --- Fișiere specifice Sistemului de Operare ---
+.DS_Store
+Thumbs.db
+
+# --- Secrete și Loguri ---
+*.log
+appsettings.Development.json
+secrets.json

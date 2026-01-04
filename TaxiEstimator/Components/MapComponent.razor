@@ -1,0 +1,57 @@
+@using TaxiEstimator.Models
+@inject IJSRuntime JS
+
+<div id="map-container" style="width: 100%; height: 100%;"></div>
+
+@code {
+    [Parameter] public string AccessToken { get; set; }
+    [Parameter] public EventCallback<GeoCoordinates> OnMapClicked { get; set; }
+
+    private IJSObjectReference _module;
+    private DotNetObjectReference<MapComponent> _objRef;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            // Încărcăm modulul JS creat de noi
+            _module = await JS.InvokeAsync<IJSObjectReference>("import", "./js/mapboxInterop.js");
+            _objRef = DotNetObjectReference.Create(this);
+
+            // Inițializăm harta
+            await _module.InvokeVoidAsync("initMap", "map-container", AccessToken, _objRef);
+        }
+    }
+
+    // Metoda apelată din JS când dai click pe hartă
+   
+    public async Task OnMapClick(double lat, double lng)
+    {
+        if (OnMapClicked.HasDelegate)
+        {
+            await OnMapClicked.InvokeAsync(new GeoCoordinates { Lat = lat, Lng = lng });
+        }
+    }
+
+    public async Task SetMarkerAsync(string type, double lat, double lng)
+    {
+        if (_module!= null)
+            await _module.InvokeVoidAsync("setMarker", type, lat, lng);
+    }
+
+    public async Task DrawRouteAsync(string geoJsonString)
+    {
+        if (_module!= null)
+        {
+            // Parsăm string-ul JSON într-un obiect JS pentru a-l trimite
+            var geoJson = System.Text.Json.JsonDocument.Parse(geoJsonString).RootElement;
+            await _module.InvokeVoidAsync("drawRoute", geoJson);
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        _objRef?.Dispose();
+        if (_module!= null) await _module.DisposeAsync();
+    }
+}
